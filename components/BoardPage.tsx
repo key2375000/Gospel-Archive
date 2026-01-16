@@ -2,6 +2,7 @@
 import React from 'react';
 import { Post } from './posts';
 import { SiteContent } from './siteData';
+import { FileIcon } from './icons';
 
 interface BoardPageProps {
     category: string;
@@ -94,9 +95,24 @@ const BoardPage: React.FC<BoardPageProps> = ({ category, language, posts, siteCo
                                     <p className="text-stone-500 text-sm font-light line-clamp-3 mb-6 flex-grow">
                                         {post.content}
                                     </p>
+                                    
+                                    {post.attachmentData && post.attachmentName && (
+                                        <div className="mb-4">
+                                            <a 
+                                                href={post.attachmentData} 
+                                                download={post.attachmentName}
+                                                className="inline-flex items-center gap-2 text-[10px] font-bold text-stone-600 hover:text-stone-900 bg-stone-50 px-3 py-1.5 rounded-lg border border-stone-100 transition-colors"
+                                            >
+                                                <FileIcon className="w-3 h-3" />
+                                                Download: {post.attachmentName}
+                                            </a>
+                                        </div>
+                                    )}
+
                                     <div className="pt-4 border-t border-stone-50 flex items-center gap-2">
                                         {post.videoUrl && <span className="text-[8px] font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-full uppercase">Video</span>}
                                         {post.imageUrl && <span className="text-[8px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full uppercase">Image</span>}
+                                        {post.attachmentData && <span className="text-[8px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full uppercase">File</span>}
                                     </div>
                                 </div>
                             </article>
