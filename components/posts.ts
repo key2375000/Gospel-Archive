@@ -1,14 +1,16 @@
 
 export interface Post {
     id: number;
-    category: 'root' | 'stem' | 'fruit';
-    language: 'english' | 'chinese' | 'korean';
+    category: string;
+    language: string;
     title: string;
     author: string;
     date: string;
     content: string;
     imageUrl?: string;
     videoUrl?: string;
+    attachmentName?: string;
+    attachmentData?: string;
 }
 
 export const posts: Post[] = [
