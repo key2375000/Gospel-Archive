@@ -32,6 +32,45 @@ const SiteSettingsEditor: React.FC<SiteSettingsEditorProps> = ({ content, onSave
         }));
     };
 
+    const deleteCategory = (key: string) => {
+        if (!window.confirm(`Remove ${key} from navigation? Posts in this category will still exist but won't be accessible via the menu.`)) return;
+        setFormData(prev => {
+            const newCats = { ...prev.labels.categories };
+            delete newCats[key];
+            return {
+                ...prev,
+                labels: { ...prev.labels, categories: newCats }
+            };
+        });
+    };
+
+    const handleVerseChange = (index: number, field: keyof Verse, value: string) => {
+        const newVerses = [...formData.verses];
+        newVerses[index] = { ...newVerses[index], [field]: value };
+        setFormData(prev => ({ ...prev, verses: newVerses }));
+    };
+
+    const addVerse = () => {
+        setFormData(prev => ({
+            ...prev,
+            verses: [...prev.verses, { text: '', reference: '' }]
+        }));
+    };
+
+    const deleteVerse = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            verses: prev.verses.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleAboutChange = (field: 'title' | 'p1' | 'p2', value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            about: { ...prev.about, [field]: value }
+        }));
+    };
+
     const handleBoardDescriptionChange = (category: string, language: string, value: string) => {
         setFormData(prev => ({
             ...prev,
@@ -72,24 +111,30 @@ const SiteSettingsEditor: React.FC<SiteSettingsEditorProps> = ({ content, onSave
     };
     
     return (
-        <div className="space-y-8 pb-20">
+        <div className="space-y-12 pb-20">
             <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-stone-100 shadow-sm sticky top-20 z-10">
-                <h1 className="text-2xl font-bold text-stone-900">Global Configuration</h1>
+                <h1 className="text-2xl font-bold text-stone-900">Site Configuration</h1>
                 <button onClick={handleSaveChanges} className="text-sm font-bold text-white bg-stone-900 hover:bg-stone-800 rounded-xl px-8 py-3 transition-all disabled:bg-stone-300" disabled={isSaving}>
                     {isSaving ? 'Processing...' : 'Save Configuration'}
                 </button>
             </div>
 
-            {/* Menu Labels */}
+            {/* Navigation Management */}
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400 border-b border-stone-100 pb-4 mb-8">Navigation & Menu Labels</h3>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400 border-b border-stone-100 pb-4 mb-8">Navigation & Menu</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="space-y-4">
-                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Category Names</label>
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex justify-between">
+                            Top Menu Categories 
+                            <span className="text-stone-300 normal-case font-normal">(Change order via code or edit labels)</span>
+                        </label>
                         {Object.keys(formData.labels.categories).map(key => (
                             <div key={key} className="flex items-center gap-3">
                                 <span className="text-[10px] font-mono text-stone-300 w-12">{key}:</span>
                                 <input type="text" value={formData.labels.categories[key]} onChange={e => handleLabelChange('categories', key, e.target.value)} className="flex-grow bg-stone-50 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-stone-900" />
+                                <button onClick={() => deleteCategory(key)} className="text-stone-300 hover:text-rose-500 transition-colors">
+                                    <TrashIcon className="w-4 h-4" />
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -101,6 +146,69 @@ const SiteSettingsEditor: React.FC<SiteSettingsEditorProps> = ({ content, onSave
                                 <input type="text" value={formData.labels.languages[key]} onChange={e => handleLabelChange('languages', key, e.target.value)} className="flex-grow bg-stone-50 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-stone-900" />
                             </div>
                         ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Header Settings */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400 border-b border-stone-100 pb-4 mb-8">Home Header & Verses</h3>
+                <div className="space-y-8">
+                    <div>
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-4">Header Background Image</label>
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                            <img src={formData.headerImage} alt="Header Preview" className="w-full md:w-64 aspect-video object-cover rounded-2xl shadow-sm" />
+                            <div className="space-y-2">
+                                <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, (url) => setFormData(prev => ({...prev, headerImage: url})))} className="text-sm" />
+                                <p className="text-[10px] text-stone-400 max-w-xs">Upload a high-resolution landscape image (recommended 3840x2160).</p>
+                                <button onClick={() => setFormData(prev => ({...prev, headerImage: ''}))} className="text-xs text-rose-500 font-medium hover:underline">Remove current photo</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-8 border-t border-stone-50">
+                        <div className="flex justify-between items-center mb-6">
+                            <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Rotating Bible Verses</label>
+                            <button onClick={addVerse} className="text-xs font-bold text-stone-900 bg-stone-100 px-4 py-2 rounded-full hover:bg-stone-200 transition-colors">+ Add Verse</button>
+                        </div>
+                        <div className="space-y-4">
+                            {formData.verses.map((verse, idx) => (
+                                <div key={idx} className="p-4 bg-stone-50 rounded-2xl border border-stone-100 relative group">
+                                    <button onClick={() => deleteVerse(idx)} className="absolute top-4 right-4 text-stone-300 hover:text-rose-500">
+                                        <TrashIcon className="w-4 h-4" />
+                                    </button>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-10">
+                                        <div className="md:col-span-3">
+                                            <label className="text-[9px] font-bold text-stone-400 uppercase block mb-1">Verse Text</label>
+                                            <textarea value={verse.text} onChange={e => handleVerseChange(idx, 'text', e.target.value)} className="w-full bg-white border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-stone-900 h-20 resize-none" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold text-stone-400 uppercase block mb-1">Reference</label>
+                                            <input type="text" value={verse.reference} onChange={e => handleVerseChange(idx, 'reference', e.target.value)} className="w-full bg-white border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-stone-900" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* About Section Settings */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400 border-b border-stone-100 pb-4 mb-8">Mission Statement (About)</h3>
+                <div className="space-y-6">
+                    <div>
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Section Title</label>
+                        <input type="text" value={formData.about.title} onChange={e => handleAboutChange('title', e.target.value)} className="w-full bg-stone-50 border-0 rounded-xl px-4 py-3 text-lg font-bold" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Primary Paragraph</label>
+                        <textarea value={formData.about.p1} onChange={e => handleAboutChange('p1', e.target.value)} className="w-full bg-stone-50 border-0 rounded-xl px-4 py-3 text-sm h-32" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Secondary Paragraph</label>
+                        <textarea value={formData.about.p2} onChange={e => handleAboutChange('p2', e.target.value)} className="w-full bg-stone-50 border-0 rounded-xl px-4 py-3 text-sm h-32" />
                     </div>
                 </div>
             </div>
